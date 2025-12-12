@@ -66,6 +66,18 @@
         /* 隱藏原生捲軸但保持滾動 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 補色查詢結果樣式 */
+        #refill-price-result {
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            background-color: #fce7f6; /* 粉色底 */
+            color: #9333ea;
+        }
     </style>
 </head>
 <body>
@@ -87,10 +99,11 @@
 
     <nav class="flex overflow-x-auto no-scrollbar gap-2 mb-6 sticky top-2 z-10 bg-white/50 p-2 rounded-2xl backdrop-blur-sm">
         <button onclick="showTab('price')" id="btn-price" class="tab-btn active-tab bg-white px-4 py-2 rounded-xl shadow-sm text-sm font-medium">價目表</button>
+        <button onclick="showTab('refill')" id="btn-refill" class="tab-btn bg-white px-4 py-2 rounded-xl shadow-sm text-sm font-medium">補色查詢</button>
         <button onclick="showTab('notice')" id="btn-notice" class="tab-btn bg-white px-4 py-2 rounded-xl shadow-sm text-sm font-medium">預約需知</button>
         <button onclick="showTab('care')" id="btn-care" class="tab-btn bg-white px-4 py-2 rounded-xl shadow-sm text-sm font-medium">保養須知</button>
         <button onclick="showTab('faq')" id="btn-faq" class="tab-btn bg-white px-4 py-2 rounded-xl shadow-sm text-sm font-medium">常見問題</button>
-        <button onclick="showTab('info')" id="btn-info" class="tab-btn bg-white px-4 py-2 rounded-xl shadow-sm text-sm font-medium">營業/交通</button>
+        <button onclick="showTab('info')" id="btn-info" class="tab-btn bg-white px-4 py-2 rounded-xl shadow-sm font-medium">營業/交通</button>
     </nav>
 
     <div id="content-area">
@@ -98,7 +111,7 @@
         <section id="tab-price" class="tab-content block">
             <div class="glass-card p-6">
                 <div class="flex justify-between items-center mb-4 border-b border-purple-100 pb-2">
-                    <h2 class="text-lg font-bold text-purple-700">✨ 服務價目表</h2>
+                    <h2 class="text-lg font-bold text-purple-700">✨ 服務價目表 (新客價)</h2>
                     <button class="copy-btn" onclick="copyContent('price-text')">複製文字</button>
                 </div>
                 <div id="price-text" class="space-y-3 text-gray-700 leading-relaxed">
@@ -114,6 +127,118 @@
             </div>
         </section>
 
+        <section id="tab-refill" class="tab-content hidden">
+            <div class="glass-card p-6 mb-4">
+                <h2 class="text-lg font-bold text-pink-600 mb-4 text-center">💖 顧客補色查詢與推算</h2>
+                <div class="text-sm text-gray-700 space-y-4">
+                    <p class="font-medium text-center bg-yellow-50 p-2 rounded-lg">請自行輸入上次操作日期，並選擇項目，以推算補色價！</p>
+                    
+                    <div class="space-y-3">
+                        <label for="lastDate" class="block font-medium">上次操作日期：</label>
+                        <input type="date" id="lastDate" class="w-full p-2 border border-purple-300 rounded-lg focus:ring-purple-500 focus:border-purple-500">
+                        
+                        <label for="serviceItem" class="block font-medium">補色項目：</label>
+                        <select id="serviceItem" class="w-full p-2 border border-purple-300 rounded-lg focus:ring-purple-500 focus:border-purple-500">
+                            <option value="">-- 請選擇項目 --</option>
+                            <option value="霧眉感">霧眉感</option>
+                            <option value="自然飄">自然飄</option>
+                            <option value="飄霧眉">飄霧眉</option>
+                            <option value="內眼線">內眼線</option>
+                            <option value="外眼線">外眼線</option>
+                            <option value="霧唇">霧唇 (免麻高階)</option>
+                            <option value="髮際線-兩側">髮際線 (兩側)</option>
+                            <option value="髮際線-全區">髮際線 (全區)</option>
+                        </select>
+                        
+                        <button onclick="calculateRefillPrice()" class="w-full py-2 bg-purple-500 text-white rounded-lg font-bold hover:bg-purple-600 transition duration-200 mt-2">
+                            ✨ 點擊推算補色價格
+                        </button>
+                        
+                        <div id="refill-price-result">請輸入日期與選擇項目</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6">
+                <div class="flex justify-between items-center mb-4 border-b border-purple-100 pb-2">
+                    <h2 class="text-lg font-bold text-purple-700">📆 顧客補色價目表</h2>
+                    <button class="copy-btn" onclick="copyContent('refill-price-table-text')">複製價目</button>
+                </div>
+                <div id="refill-price-table-text" class="text-xs text-gray-700 leading-relaxed overflow-x-auto">
+                    <p class="font-bold text-sm mb-2">超過15個月建議使用單次操作優惠價</p>
+                    <table class="w-full min-w-[350px] table-auto border-collapse">
+                        <thead>
+                            <tr class="bg-purple-100/50 text-purple-700">
+                                <th class="p-2 border border-purple-200">項目</th>
+                                <th class="p-2 border border-purple-200">3個月</th>
+                                <th class="p-2 border border-purple-200">6個月</th>
+                                <th class="p-2 border border-purple-200">12個月</th>
+                                <th class="p-2 border border-purple-200">15個月</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="hover:bg-pink-50/50">
+                                <td class="p-2 border border-purple-200 font-medium">霧眉感</td>
+                                <td class="p-2 border border-purple-200">$2800</td>
+                                <td class="p-2 border border-purple-200">$3500</td>
+                                <td class="p-2 border border-purple-200">$5000</td>
+                                <td class="p-2 border border-purple-200">$6000</td>
+                            </tr>
+                            <tr class="hover:bg-pink-50/50">
+                                <td class="p-2 border border-purple-200 font-medium">自然飄</td>
+                                <td class="p-2 border border-purple-200">$3300</td>
+                                <td class="p-2 border border-purple-200">$4000</td>
+                                <td class="p-2 border border-purple-200">$5500</td>
+                                <td class="p-2 border border-purple-200">$6500</td>
+                            </tr>
+                            <tr class="hover:bg-pink-50/50">
+                                <td class="p-2 border border-purple-200 font-medium">飄霧眉</td>
+                                <td class="p-2 border border-purple-200">$3800</td>
+                                <td class="p-2 border border-purple-200">$4500</td>
+                                <td class="p-2 border border-purple-200">$6000</td>
+                                <td class="p-2 border border-purple-200">$7000</td>
+                            </tr>
+                            <tr class="hover:bg-pink-50/50">
+                                <td class="p-2 border border-purple-200 font-medium">內眼線</td>
+                                <td class="p-2 border border-purple-200">$2500</td>
+                                <td class="p-2 border border-purple-200">$3000</td>
+                                <td class="p-2 border border-purple-200">$4000</td>
+                                <td class="p-2 border border-purple-200">$4500</td>
+                            </tr>
+                            <tr class="hover:bg-pink-50/50">
+                                <td class="p-2 border border-purple-200 font-medium">外眼線</td>
+                                <td class="p-2 border border-purple-200">$3000</td>
+                                <td class="p-2 border border-purple-200">$3500</td>
+                                <td class="p-2 border border-purple-200">$4500</td>
+                                <td class="p-2 border border-purple-200">$5000</td>
+                            </tr>
+                            <tr class="hover:bg-pink-50/50">
+                                <td class="p-2 border border-purple-200 font-medium">霧唇</td>
+                                <td class="p-2 border border-purple-200">$4500</td>
+                                <td class="p-2 border border-purple-200">$5000</td>
+                                <td class="p-2 border border-purple-200">$6000</td>
+                                <td class="p-2 border border-purple-200">$6500</td>
+                            </tr>
+                            <tr class="hover:bg-pink-50/50">
+                                <td class="p-2 border border-purple-200 font-medium">髮際線(兩側)</td>
+                                <td class="p-2 border border-purple-200">$3500</td>
+                                <td class="p-2 border border-purple-200">$4500</td>
+                                <td class="p-2 border border-purple-200">$5500</td>
+                                <td class="p-2 border border-purple-200">$6000</td>
+                            </tr>
+                             <tr class="hover:bg-pink-50/50">
+                                <td class="p-2 border border-purple-200 font-medium">髮際線(全區)</td>
+                                <td class="p-2 border border-purple-200">$4000</td>
+                                <td class="p-2 border border-purple-200">$5000</td>
+                                <td class="p-2 border border-purple-200">$6000</td>
+                                <td class="p-2 border border-purple-200">$6500</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <section id="tab-notice" class="tab-content hidden">
             <div class="glass-card p-6 mb-4">
                 <div class="flex justify-between items-center mb-4 border-b border-purple-100 pb-2">
@@ -121,19 +246,24 @@
                     <button class="copy-btn" onclick="copyContent('notice-basic')">複製</button>
                 </div>
                 <div id="notice-basic" class="text-sm text-gray-600 space-y-2">
-                    <p>1. 每日限動更新時段，可私訊索取空檔。</p>
-                    <p>2. 定金：角蛋白500元 / 紋繡項目1000元。</p>
-                    <p>3. 匯款後請提供後五碼，並註記姓名。</p>
-                    <p>⚠️ 付定後改期僅限一次，定金無退還。</p>
-                    <p>⚠️ 免費補色不可改期，改期視同放棄。</p>
+                    <p>1. 每日Ig 限動更新可預約時段，可直接點選Ig 或直接私訊索取空檔時間表。</p>
+                    <p>2. 預約需要付定金：角蛋白課程付定500元 / 紋繡項目付定1000元。</p>
+                    <p>3. 匯款完成請提供後五碼複查，並在備註欄打上姓名，確認完成才算完成預約。</p>
+                    <p>⚠️ 付定後改期僅限一次，超出需重新付定，預約定金無退還。</p>
+                    <p>⚠️ 同時段以先完成付定客人為優先預約。</p>
+                    <p>⚠️ 免費補色不提供更改時間，預約後改期、取消即視為放棄補色，再度預約則依補色價付費補色。</p>
                 </div>
             </div>
 
             <div class="glass-card p-6 mb-4">
                 <h2 class="text-lg font-bold text-purple-700 mb-2">👁️ 紋繡須知</h2>
                 <div class="text-sm text-gray-600 space-y-2">
-                    <p>• 滿18歲，前三天加強保濕，禁熬夜喝酒。</p>
-                    <p>• 曾紋繡過、懷孕、蟹足腫、糖尿病需預先告知。</p>
+                    <p>• 切勿遲到，會晚到或改時間請先告知，無告知者不再接受預約。</p>
+                    <p>• 操作前三天請注意眉毛附近皮膚保濕、不要熬夜會幫助留色喔，並切忌熬夜喝酒，否則操作容易敏感泛紅疼痛感明顯哦。</p>
+                    <p>• 預約需滿18歲，未成年需家長同意。</p>
+                    <p>• 曾紋繡過（如眉毛、眼線、霧唇）請先告知，需評估是否可再次操作。</p>
+                    <p>• 懷孕、蟹足腫、糖尿病、心臟病、或是A酸服用中，需先告知進行諮詢評估。</p>
+                    <p>• 近期內額頭部分是否有醫美行為，因會影響留色操作，若有請先諮詢告知唷。</p>
                 </div>
             </div>
 
@@ -145,41 +275,53 @@
                 <div id="booking-form" class="text-sm text-gray-600">
                     姓名：<br>電話：<br>想預約項目：<br>想預約的日期：<br>想預約的時段：
                 </div>
-                <a href="https://lin.ee/r9o9A1n" class="block text-center mt-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-bold">點擊開啟 Line@ 預約</a>
+                <a href="https://lin.ee/r9o9A1n" class="block text-center mt-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-bold">點擊開啟 Line@ 填寫「我要預約」</a>
             </div>
         </section>
 
         <section id="tab-care" class="tab-content hidden space-y-4">
             <div class="glass-card p-6">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold text-pink-600">【眉毛/眼線術後】</h3>
+                    <h3 class="font-bold text-pink-600">【眉毛術後注意】</h3>
                     <button class="copy-btn" onclick="copyContent('care-eyebrow')">複製</button>
                 </div>
-                <div id="care-eyebrow" class="text-xs text-gray-600 leading-relaxed">
-                    眉毛：第一天不碰水，3-5天濕敷生理食鹽水，睡前薄敷修護霜，保養品避開眉毛。<br>
-                    眼線：三天不上眼妝，脫皮不摳，建議購買愛爾康眼藥膏。
+                <div id="care-eyebrow" class="text-xs text-gray-600 leading-relaxed space-y-1">
+                    <p>✔ 第一天盡量不碰水，用洗臉海綿清潔，持續敷生理食鹽水3-5天。</p>
+                    <p>✔ 保養品需避開眉毛。</p>
+                    <p>✔ 睡前薄敷修護霜（夏天可不用擦，除非不適），隔天開始以食鹽水濕敷。</p>
+                    <p>✔ 隔天開始早中晚濕敷生理食鹽水，每次約三到五分鐘（次數少，敷的時間就拉長）。</p>
+                    <p>✔ 14天過後觀察留色，留色好可第2.3個月再回補。</p>
                 </div>
             </div>
 
             <div class="glass-card p-6">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold text-pink-600">【霧唇術後】</h3>
+                    <h3 class="font-bold text-pink-600">【霧唇術後注意】</h3>
                     <button class="copy-btn" onclick="copyContent('care-lip')">複製</button>
                 </div>
-                <div id="care-lip" class="text-xs text-gray-600 leading-relaxed">
-                    喝水用吸管，餐後食鹽水清潔並厚敷凡士林。一週內避開辛辣、熱湯、菸酒，勿熬夜避免皰疹。
+                <div id="care-lip" class="text-xs text-gray-600 leading-relaxed space-y-1">
+                    <p>✔ 喝水可用吸管輔助、腫脹較明顯者可冰敷。</p>
+                    <p>✔ 餐後用食鹽水清潔，有組織液時紗布巾按壓並塗抹凡士林。</p>
+                    <p>✔ 睡前敷凡士林。</p>
+                    <p>✔ 刷牙勿用生水避免感染，需煮沸再使用。</p>
+                    <p>✔ 一周內避開熱湯、辛辣食物、酒、冰、抽菸，盡量早睡勿熬夜！容易誘發皰嘴角皰疹。</p>
+                    <p class="text-red-600 font-medium">⚠️ 如發炎可自行購買消炎藥、口服維他命Ｃ，服用兩至三天！</p>
                 </div>
             </div>
 
             <div class="glass-card p-6">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold text-pink-600">【睫毛/除色/髮際線】</h3>
+                    <h3 class="font-bold text-pink-600">【其他項目術後】</h3>
                     <button class="copy-btn" onclick="copyContent('care-other')">複製</button>
                 </div>
-                <div id="care-other" class="text-xs text-gray-600 leading-relaxed">
-                    睫毛：24h不碰水，早晚擦保養液。<br>
-                    除色：保持乾燥，術後一個月加強防曬。<br>
-                    髮際線：36小時不碰水，洗頭泡沬帶過不搓揉。
+                <div id="care-other" class="text-xs text-gray-600 leading-relaxed space-y-2">
+                    <p class="font-bold">眼線術後注意：</p>
+                    <p>✔ 三天內不上任何眼妝、第一天不碰水。</p>
+                    <p>✔ 脫皮期間不摳，待其自然代謝。</p>
+                    <p>✔ ⚠️ 敏感者可購買愛爾康眼藥膏。</p>
+                    <p class="font-bold mt-2">髮際線術後注意：</p>
+                    <p>✔ 操作後36小時不碰水，結痂修復期不摳除皮屑。</p>
+                    <p>✔ 修復期請濕敷生理食鹽水一天三次，每次三到五分鐘。</p>
                 </div>
             </div>
         </section>
@@ -187,15 +329,15 @@
         <section id="tab-faq" class="tab-content hidden space-y-3">
             <div class="glass-card p-4">
                 <p class="font-bold text-sm text-purple-700">Q：操作紋繡會痛嗎？</p>
-                <p class="text-xs text-gray-600">A：痛感因人而異，會使用舒緩膏，許多客人會睡著唷！</p>
+                <p class="text-xs text-gray-600">A：痛感的耐受度因人而異！我們會使用舒緩膏減少疼痛不適，有蠻多客人都會在操作過程中睡著。</p>
             </div>
             <div class="glass-card p-4">
                 <p class="font-bold text-sm text-purple-700">Q：可以維持多久？</p>
-                <p class="text-xs text-gray-600">A：建議一年內回補，視個人膚質代謝狀況而定。</p>
+                <p class="text-xs text-gray-600">A：大致1年內我們會建議再回補，依每個人代謝狀況及膚質不同而異（酒槽及脂漏性皮膚炎因為代謝較快，只能維持 6-8 個月甚至更短）。</p>
             </div>
             <div class="glass-card p-4">
-                <p class="font-bold text-sm text-purple-700">Q：眉型怎麼選擇？</p>
-                <p class="text-xs text-gray-600">A：現場溝通試畫，依臉型、膚色設計，滿意才操作。</p>
+                <p class="font-bold text-sm text-purple-700">Q：現在霧眉後期還會變成紅橘嗎？</p>
+                <p class="text-xs text-gray-600">A：術後眉毛變色是跟選用的色乳、配色及手法有關！搭配輕柔手法正常操作在表皮層是會代謝的，並選用大廠SGS 檢驗合格色乳。</p>
             </div>
         </section>
 
@@ -209,7 +351,7 @@
                 <div class="mb-6">
                     <h3 class="font-bold text-purple-700">📍 店家地址</h3>
                     <p class="text-gray-600 text-sm mb-4">台中市北區國強街74-1號</p>
-                    <a href="https://www.google.com/maps/search/?api=1&query=台中市北區國強街74-1號" target="_blank" class="inline-block bg-white border border-purple-200 text-purple-600 px-6 py-2 rounded-full text-sm font-bold shadow-sm">
+                    <a href="https://www.google.com/maps/search/?api=1&query=%E5%8F%B0%E4%B8%AD%E5%B8%82%E5%8C%97%E5%8D%80%E5%9C%8B%E5%BC%B7%E8%A1%9774-1%E8%99%9F" target="_blank" class="inline-block bg-white border border-purple-200 text-purple-600 px-6 py-2 rounded-full text-sm font-bold shadow-sm">
                         <i class="fas fa-map-marker-alt mr-2"></i>開啟 Google Map
                     </a>
                 </div>
@@ -220,6 +362,18 @@
 </div>
 
 <script>
+    // 補色價目表數據 (用於計算機)
+    const refillPrices = {
+        '霧眉感': { '3': 2800, '6': 3500, '12': 5000, '15': 6000 },
+        '自然飄': { '3': 3300, '6': 4000, '12': 5500, '15': 6500 },
+        '飄霧眉': { '3': 3800, '6': 4500, '12': 6000, '15': 7000 },
+        '內眼線': { '3': 2500, '6': 3000, '12': 4000, '15': 4500 },
+        '外眼線': { '3': 3000, '6': 3500, '12': 4500, '15': 5000 },
+        '霧唇': { '3': 4500, '6': 5000, '12': 6000, '15': 6500 },
+        '髮際線-兩側': { '3': 3500, '6': 4500, '12': 5500, '15': 6000 },
+        '髮際線-全區': { '3': 4000, '6': 5000, '12': 6000, '15': 6500 },
+    };
+
     function showTab(tabId) {
         // Hide all contents
         document.querySelectorAll('.tab-content').forEach(content => {
@@ -239,10 +393,77 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function calculateRefillPrice() {
+        const lastDateInput = document.getElementById('lastDate').value;
+        const serviceItem = document.getElementById('serviceItem').value;
+        const resultDiv = document.getElementById('refill-price-result');
+        
+        if (!lastDateInput || !serviceItem) {
+            resultDiv.innerHTML = '請輸入上次操作日期並選擇補色項目。';
+            return;
+        }
+
+        const lastDate = new Date(lastDateInput);
+        const today = new Date();
+        
+        // 計算天數差
+        const diffTime = Math.abs(today - lastDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        // 換算月數 (簡化計算: 30天為1個月)
+        const diffMonths = Math.floor(diffDays / 30);
+        
+        let priceKey;
+        let price;
+
+        if (diffMonths <= 3) {
+            priceKey = '3';
+        } else if (diffMonths <= 6) {
+            priceKey = '6';
+        } else if (diffMonths <= 12) {
+            priceKey = '12';
+        } else if (diffMonths <= 15) {
+            priceKey = '15';
+        } else {
+            // 超過15個月
+            resultDiv.innerHTML = `上次操作於 **${diffMonths}** 個月前，已超過15個月優惠期。<br>建議詢問單次操作優惠價。`;
+            return;
+        }
+
+        price = refillPrices[serviceItem][priceKey];
+
+        if (price) {
+            resultDiv.innerHTML = `上次操作於 **${diffMonths}** 個月前，<br>補色價格為：<span class="text-xl text-red-600">$${price}</span>`;
+        } else {
+            resultDiv.innerHTML = '查無此項目的補色價格，請洽詢眉毛小姐。';
+        }
+    }
+
     async function copyContent(elementId) {
-        const text = document.getElementById(elementId).innerText;
+        let textToCopy = '';
+        if (elementId === 'refill-price-table-text') {
+             // 針對表格內容進行格式化複製
+             const table = document.getElementById(elementId);
+             textToCopy += '--- 顧客補色價目表 ---\n';
+             
+             // 取得標題行
+             const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText);
+             textToCopy += headers.join('\t') + '\n';
+             
+             // 取得數據行
+             table.querySelectorAll('tbody tr').forEach(row => {
+                 const rowData = Array.from(row.querySelectorAll('td')).map(td => td.innerText);
+                 textToCopy += rowData.join('\t') + '\n';
+             });
+             textToCopy += '----------------------\n超過15個月建議使用單次操作優惠價。';
+
+        } else {
+            // 複製其他區塊的純文字內容
+            textToCopy = document.getElementById(elementId).innerText;
+        }
+        
         try {
-            await navigator.clipboard.writeText(text);
+            await navigator.clipboard.writeText(textToCopy);
             const btn = event.target;
             const originalText = btn.innerText;
             btn.innerText = "已複製！";
@@ -251,6 +472,11 @@
             alert('複製失敗，請手動選取文字');
         }
     }
+
+    // 預設顯示第一個分頁
+    document.addEventListener('DOMContentLoaded', () => {
+        showTab('price');
+    });
 </script>
 
 </body>
